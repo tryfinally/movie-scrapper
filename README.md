@@ -1,2 +1,4 @@
 # movie-scrapper
-Scrap informatio on movies from IMDb site
+movie-scrapper is an IMDb web site scraper that will retrive information about movie titles which contains a given word or words.
+
+It is for educationl purposes only.

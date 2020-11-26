@@ -12,13 +12,16 @@ def prepare_search_url(args):
 
 def retrieve_details_for(title, title_url):
     url = "https://www.imdb.com" + title_url
+    print(url)
     page = requests.get(url)
     soup = BeautifulSoup(page.content, 'html.parser')
     title_div = soup.find('div', class_='title_wrapper')
-    title = title_div.find('h1').text
-    length = soup.find('time').text
+    title = title_div.find('h1').text.strip()
+    length = soup.find('time').text.strip()
+
     subtext = soup.find('div', class_='subtext')
     subtext_items = subtext.text.split('|')
+    rating = subtext_items[0].strip() if len(subtext_items) == 4 else ''
     # print(subtext_items)
     credit_summary_items = soup.find_all('div', class_='credit_summary_item')
 
@@ -32,8 +35,8 @@ def retrieve_details_for(title, title_url):
     print(title)
     print("Director: ", directors_names)
     print("Stars: ", stars_names)
-    print("Time: ", length.strip())
-    print("Rating: ", subtext_items[0].strip())
+    print("Time: ", length)
+    print("Rating: ", rating)
     print("----"*10)
 
 

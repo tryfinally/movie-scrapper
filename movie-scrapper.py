@@ -15,10 +15,19 @@ def retrieve_details_for(title, title_url):
     print(url)
     page = requests.get(url)
     soup = BeautifulSoup(page.content, 'html.parser')
+
+    time = soup.find('time')
+    if time is not None:
+        length = time.text.strip()
+    else:
+        return # apparently in development/pre-production stage
+
     title_div = soup.find('div', class_='title_wrapper')
     title = title_div.find('h1').text.strip()
-    length = soup.find('time').text.strip()
-
+    # if(length is not None):
+    #     length = length.text.strip()
+    # else:
+    #     length = 'N/A' #return # in development movie
     subtext = soup.find('div', class_='subtext')
     subtext_items = subtext.text.split('|')
     rating = subtext_items[0].strip() if len(subtext_items) == 4 else ''

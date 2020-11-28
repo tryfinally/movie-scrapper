@@ -8,14 +8,15 @@ from bs4 import BeautifulSoup
 def prepare_search_url(args):
     query = " ".join(args.search_term)
     query_type = "ft" if args.by_movie_title else "tv"
-    return "https://www.imdb.com/find?q={}&s=tt&ttype={}".format(query, "ft")
+    return "https://www.imdb.com/find?q={}&s=tt&ttype={}".format(query, query_type)
 
 def retrieve_details_for(title, title_url):
     url = "https://www.imdb.com" + title_url
-    print(url)
+    # print(url)
     page = requests.get(url)
     soup = BeautifulSoup(page.content, 'html.parser')
 
+    #this is not accurate
     time = soup.find('time')
     if time is not None:
         length = time.text.strip()
@@ -24,10 +25,7 @@ def retrieve_details_for(title, title_url):
 
     title_div = soup.find('div', class_='title_wrapper')
     title = title_div.find('h1').text.strip()
-    # if(length is not None):
-    #     length = length.text.strip()
-    # else:
-    #     length = 'N/A' #return # in development movie
+
     subtext = soup.find('div', class_='subtext')
     subtext_items = subtext.text.split('|')
     rating = subtext_items[0].strip() if len(subtext_items) == 4 else ''
@@ -37,8 +35,8 @@ def retrieve_details_for(title, title_url):
     directors = credit_summary_items[0].find_all('a')
     directors_names = ", ".join([d.text for d in directors])
 
-    #  ignore last a href is for full cast
-    stars = credit_summary_items[2].find_all('a')[:-1]
+    #  ignore last a href    is for full cast
+    stars = credit_summary_items[-1].find_all('a')[:-1]
     stars_names = ", ".join([d.text for d in stars])
 
     print(title)
@@ -47,10 +45,6 @@ def retrieve_details_for(title, title_url):
     print("Time: ", length)
     print("Rating: ", rating)
     print("----"*10)
-
-
-
-
 
 def retrieve_records_for(results):
     for result in results:
@@ -61,8 +55,8 @@ def retrieve_records_for(results):
 
 def queryIMDb(args):
     url = prepare_search_url(args)
+    # print(url)
     page = requests.get(url)
-
     soup = BeautifulSoup(page.content, 'html.parser')
     main_response = soup.find(id='main')
     # print(results.prettify())

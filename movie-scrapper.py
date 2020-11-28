@@ -35,6 +35,35 @@ class IMDBQueryBase(object):
             title_path = record.find('a')['href']
             self.retrieve_details_for(title, title_path)
 
+class ResultPage:
+    def __init__(self, page):
+        self.soup = BeautifulSoup(page.content, 'html.parser')
+        self.credit_summary_items = self.soup.find_all('div', class_='credit_summary_item')
+        self.subtext = self.soup.find('div', class_='subtext')
+
+    def duration(self):
+        t = self.soup.find('time')
+        if t is not None:
+            return t.text.strip()
+        else:
+            return "" # apparently in development/pre-production stage
+
+    def title(self):
+        title_div = self.soup.find('div', class_='title_wrapper')
+        return title_div.find('h1').text.strip()
+
+    def directors(self):
+        ds = self.credit_summary_items[0].find_all('a')
+        return ", ".join([d.text for d in ds])
+
+    def stars(self):
+        #  ignore last a href    is for full cast
+        stars = self.credit_summary_items[-1].find_all('a')[:-1]
+        return ", ".join([d.text for d in stars])
+
+    def rating(self):
+        subtext_items = self.subtext.text.split('|')
+        return subtext_items[0].strip() if len(subtext_items) == 4 else ''
 
 class MovieTitles(IMDBQueryBase):
     def __init__(self):
@@ -44,36 +73,13 @@ class MovieTitles(IMDBQueryBase):
         url = self.base_url + title_path
         # print(url)
         page = requests.get(url)
-        soup = BeautifulSoup(page.content, 'html.parser')
+        result = ResultPage(page)
 
-        #this is not accurate
-        time = soup.find('time')
-        if time is not None:
-            length = time.text.strip()
-        else:
-            return # apparently in development/pre-production stage
-
-        title_div = soup.find('div', class_='title_wrapper')
-        title = title_div.find('h1').text.strip()
-
-        subtext = soup.find('div', class_='subtext')
-        subtext_items = subtext.text.split('|')
-        rating = subtext_items[0].strip() if len(subtext_items) == 4 else ''
-        # print(subtext_items)
-        credit_summary_items = soup.find_all('div', class_='credit_summary_item')
-
-        directors = credit_summary_items[0].find_all('a')
-        directors_names = ", ".join([d.text for d in directors])
-
-        #  ignore last a href    is for full cast
-        stars = credit_summary_items[-1].find_all('a')[:-1]
-        stars_names = ", ".join([d.text for d in stars])
-
-        print(title)
-        print("Director: ", directors_names)
-        print("Stars: ", stars_names)
-        print("Time: ", length)
-        print("Rating: ", rating)
+        print("Title: ", result.title())
+        print("Director: ", result.directors())
+        print("Stars: ", result.stars())
+        print("Time: ", result.duration())
+        print("Rating: ", result.rating())
         print("----"*10)
 
 
@@ -81,7 +87,6 @@ def main():
     parser = argparse.ArgumentParser(description='IMDb scraper')
     parser.add_argument('search_term', action='store', nargs='*',
                         help='Search term to query IMDb. like word/s in title')
-
 
     parser.add_argument('-m', action='store_true', dest='by_movie_title', default=False,
                             help='Search by movies title. This is the default')
@@ -93,9 +98,12 @@ def main():
         print("you must specify a search term")
         exit(1)
 
-    # queryIMDb(args)
-    mq = MovieTitles()
-    mq.query(args.search_term)
+    if args.by_movie_title:
+        q = MovieTitles()
+    # elif args.by_tv_title:
+    #     q = TvTitels()
+
+    q.query(args.search_term)
 
 if __name__ == "__main__":
     main()
